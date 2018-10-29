@@ -42,11 +42,19 @@ ajaxButton.addEventListener("click",function(evt){
 		  var numresults = 0;
 			//figure out if has results.
 			var responseObject = JSON.parse(xhr.responseText);
+			
+			//seems responseObject is sometimes array-like, sometimes not!
+			//can see it's like an array by length property
+			console.log( typeof responseObject);	//always object, not array
+			console.log( responseObject.length);
+			var thingWeWant = responseObject.length ? responseObject[0]:responseObject;
+			
 			//console.log(responseObject);
 			//console.log(responseObject[0]);
-			console.log(responseObject[0].data);
-			if (responseObject.data && responseObject.data.children){
-				numresults =  responseObject.data.children.length;
+			
+			console.log(thingWeWant.data);
+			if (thingWeWant.data && thingWeWant.data.children){
+				numresults =  thingWeWant.data.children.length;
 			}
 			console.log("number of results : " + numresults);
 		} else {
