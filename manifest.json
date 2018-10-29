@@ -1,0 +1,29 @@
+{
+
+  "manifest_version": 2,
+  "name": "Side Channel",
+  "description": "Search for and display comments about current page",
+  "version": "0.0",
+  "applications": {
+    "gecko": {
+      "strict_min_version": "54.0a1"
+    }
+  },
+
+  "sidebar_action": {
+    "default_icon": "icons/star.png",
+    "default_title" : "SideChannel",
+    "default_panel": "sidebar/panel.html"
+  },
+
+  "permissions": ["tabs"],
+
+  "commands": {
+    "_execute_sidebar_action": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+Y"
+      }
+    }
+  }
+
+}

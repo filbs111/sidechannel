@@ -1,0 +1,30 @@
+want to make a webextension that searches sites that might provide comments on a webpage that the user is browsing, and display this conveniently.
+
+motivation:
+users want to comment on sites they browse, and find others' comments.
+
+Some sites provide commenting systems. These come in many flavours, eg facebook, disqus. Some problems:
+1. user doesn't have an account on the relevant system
+2. user doesn't wish to discuss that topic that system, for example, discussion of controversial topics with their real name on facebook.
+3. site owner deletes comments they dislike, eg criticism their product.
+4. 3rd party comment system provided deletes useful information, users.
+5. unmoderated spam makes useful comments hard to find.
+6. site owner disables, or doesn't implement commenting at all. (cost of implementation, moderation, failing to moderate, legal liability)
+
+This project seeks to enable commenting on a page, without requiring the comments to be served as a part of that page, by use of a special browser, or browser extension.
+
+There are many existing news aggregator systems, where a set of comments is linked to a web link. Probably the most widely known and used being "reddit". Reddit provides a search system that can be used to find sites by url, which appears to work well. 
+
+Compared to creating a new repository of comments, using an existing site such as reddit solves the problems of spam moderation and hosting. Users are still left with the burden of understanding the biases of moderators, to know which are misleading, and which may delete their comments etc, but this, for many sites, will be an improvement over the set of problems presented by comment systems served within the page in question, since the user can use their preferred system, or moderated community whose curation they trust, to host their comment. In the event the website owner does provide a well-functioning comment system, this option is still available to the user.
+
+This project seeks to make finding relevant discussion more practical for a person browsing a site. It is already possible for a user to copy their current URL, go to reddit's search page, paste it in and see any results. This is time consuming, and more so if the user wishes to check multiple systems.
+
+Goals:
+
+1. launch search for reddit results by opening new browser page. Still a chore for user- user doesn't know whether are any results
+2. provide brief results without loading a new page. Just displaying whether nonzero results is useful. possibly issues with rate limiting.
+	probably should still require a click from user by default, or will be sending user's web history to reddit etc!
+3. smart truncation/conversion of urls to find results for equivalent pages. eg bbc.co.uk vs bbc.com , mobile versions of sites, trimming url query ?q= ...
+4. search multiple reddit-style news aggregators.
+5. search engine results?
+6. search for parts of pages - eg finding posts for individual tweets, or for links on a page displayed over buttons. maybe more trouble with rate limitation. 

@@ -1,0 +1,61 @@
+example searches with 0, 1, or many results (at time of writing!)
+
+0 results
+https://www.youtube.com/watch?v=-rwmPMtLd2w
+search redirects to https://www.reddit.com/submit?url=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3DPHuLy0DT_84
+
+1 result
+https://gfycat.com/PoliteEnergeticGibbon
+https://www.bbc.com/news/technology-45991093
+
+many results
+https://gematsu.com/2018/10/visual-novel-silverio-trinity-coming-to-playstation-hindered-by-recent-sony-regulations
+
+https://www.youtube.com/watch?v=PHuLy0DT_84
+search redirects to https://www.reddit.com/submit?url=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3DPHuLy0DT_84
+
+
+todo: if result is quarantined, does the json result show more info than regular page search result?
+
+
+
+note that some links redirect, differently depending on location or user agent.
+eg bbc.co.uk redirects to bbc.com when testing from netherlands VPN, and reddit search doesn't take this into account - different results for each.
+
+
+
+
+initial implementation based on 
+https://github.com/mdn/webextensions-examples/tree/master/annotate-page
+
+reddit search docs
+https://www.reddit.com/dev/api#GET_search
+note
+max q length 512 chars shorter than max url length, though likely won't matter in practice (urls typically much shorter)
+limit useful for reducing size of response if just want to know whether has results or not (limit=1 sufficient)
+
+useful links
+https://www.reddit.com/r/redditdev/
+
+current way getting url of current page maybe not ideal ( tabs permission )
+maybe better to have a content script to read window.location
+https://stackoverflow.com/questions/1979583/how-can-i-get-the-url-of-the-current-tab-from-a-google-chrome-extension
+https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Content_scripts#Communicating_with_background_scripts
+
+
+sidebar or button?
+if JUST reddit results, just show a button with bit of text showing results (eg 0, 1, 2 ... n+ )
+
+
+example of curling search api
+
+regular search
+curl https://www.reddit.com/search?q=test > resp1.txt
+
+JSON "search" - note user agent maybe unnecessary
+curl -A "com.filbs111.sidechannel" https://www.reddit.com/search.json?q=test
+
+limit number of results - note quotes to avoid escaping &
+curl -A "com.filbs111.sidechannel" "https://www.reddit.com/search.json?q=test&limit=1"
+
+this gets a relatively small response (~10k - depends on the post), but still a lot of info don't need.
