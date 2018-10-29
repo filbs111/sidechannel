@@ -16,7 +16,10 @@
     "default_panel": "sidebar/panel.html"
   },
 
-  "permissions": ["tabs"],
+  "permissions": ["tabs",
+   "http://www.reddit.com/search.json",
+   "https://www.reddit.com/search.json"
+	],
 
   "commands": {
     "_execute_sidebar_action": {
