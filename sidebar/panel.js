@@ -5,12 +5,25 @@ const numSearchResults = document.getElementById("numsearchresults");
 const preSearchButton = document.querySelector("#presearchbutton");
 var currentUrl = "";
 
+var autoSearchDomains = [ "www.theguardian.com", "bbc.co.uk" ];	//list of sites where will automatically do a search.
+	//not a good idea to auto-search everything since would result in sending user's navigation data to reddit!
+	//therefore intially only want family friendly sites here that won't get people persecuted by the state and/or society
+	//maybe want more general regex
+
 function updateContent() {
   numSearchResults.innerHTML = "?";
   browser.tabs.query({windowId: myWindowId, active: true})
     .then((tabs) => {
 	//url would like to search for
 	currentUrl = tabs[0].url;
+	
+	//check for match in auto search domains array
+	//TODO avoid repeating this during page loading - appears to be triggered multiple times for some sites
+	//TODO disable pre-search button when performing search
+	var filteredMatches = autoSearchDomains.filter(function(matchstring){return currentUrl.match(matchstring);});
+	if (filteredMatches.length>0){
+		performPreSearch();
+	}
 	//pageNameBox.innerHTML = currentUrl;
     });
 }
@@ -19,6 +32,9 @@ searchButton.addEventListener("click",function(evt){
 	window.open("https://www.reddit.com/search?q="+encodeURI(currentUrl));
 });
 preSearchButton.addEventListener("click",function(evt){
+	performPreSearch();
+});
+function performPreSearch(){
 	//var jsonSearchUrl = "https://www.reddit.com/search.json?limit=1&q="+encodeURIComponent(currentUrl);
 	var jsonSearchUrl = "https://www.reddit.com/search.json?q="+encodeURIComponent(currentUrl);
 		//currently limit appears to not be applied. same results irrespective of limit. is this a bug? does it happen for curl? 
@@ -69,7 +85,7 @@ preSearchButton.addEventListener("click",function(evt){
 	  console.error(xhr.statusText);
 	};
 	xhr.send(null);
-});
+};
 
 /*
 Update content when a new tab becomes active.
