@@ -1,22 +1,24 @@
 var myWindowId;
 const pageNameBox = document.querySelector("#pagename");
 const searchButton = document.querySelector("#searchbutton");
-const ajaxButton = document.querySelector("#ajaxbutton");
+const numSearchResults = document.getElementById("numsearchresults");
+const preSearchButton = document.querySelector("#presearchbutton");
 var currentUrl = "";
 
 function updateContent() {
+  numSearchResults.innerHTML = "?";
   browser.tabs.query({windowId: myWindowId, active: true})
     .then((tabs) => {
-	pageNameBox.innerHTML = tabs[0].url;
 	//url would like to search for
 	currentUrl = tabs[0].url;
+	//pageNameBox.innerHTML = currentUrl;
     });
 }
 
 searchButton.addEventListener("click",function(evt){
 	window.open("https://www.reddit.com/search?q="+encodeURI(currentUrl));
 });
-ajaxButton.addEventListener("click",function(evt){
+preSearchButton.addEventListener("click",function(evt){
 	//var jsonSearchUrl = "https://www.reddit.com/search.json?limit=1&q="+encodeURIComponent(currentUrl);
 	var jsonSearchUrl = "https://www.reddit.com/search.json?q="+encodeURIComponent(currentUrl);
 		//currently limit appears to not be applied. same results irrespective of limit. is this a bug? does it happen for curl? 
@@ -57,6 +59,7 @@ ajaxButton.addEventListener("click",function(evt){
 				numresults =  thingWeWant.data.children.length;
 			}
 			console.log("number of results : " + numresults);
+			numSearchResults.innerHTML = numresults;
 		} else {
 		  console.error(xhr.statusText);
 		}
