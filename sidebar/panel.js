@@ -10,7 +10,7 @@ var mycount=0;
 
 var autoSearchHosts = [ 
 	"www.theguardian.com",
-	"bbc.co.uk", "bbc.com",
+	"www.bbc.co.uk", "www.bbc.com",
 	"www.nytimes.com"
 	];	//list of sites where will automatically do a search.
 	//not a good idea to auto-search everything since would result in sending user's navigation data to reddit!
@@ -20,12 +20,18 @@ var autoSearchHosts = [
 //get rid of params so search finds something more useful.
 //some places do want to retain params - eg youtube ?v=
 //other places want to get rid of params - eg nytimes has ...&action=click&module=editorsPicks... etc
-
 //for unknown sites, possibly UI should provide options, or preemptivaly search for URL as is, and stripped
 
 //simple way, accept same params regardless of website.
 var acceptableParams = ["v"];	//v so youtube works
 //TODO list params that wish to retain for each host. later could be specific to endpoints.
+
+//sites that AFAIK have the same content
+//TODO combine config for this and autoSearchHosts.
+var equivalentSites = [
+	[ "www.bbc.co.uk", "www.bbc.com" ]	//these are looking for exact match - requires www
+	];
+
 
 var mylog=console.log;	//so can turn off logs easily
 //var mylog=function(txt){};
@@ -44,7 +50,6 @@ function updateContent() {
 	//TODO disable pre-search button when performing search
 	var currentHost = currentUrl.hostname;
 	
-	//strip params from url (TODO don't do this for youtube!
 	//var newSearchTerm = currentUrl.origin + currentUrl.pathname;
 	
 	var searchParams=currentUrl.searchParams;
@@ -57,9 +62,11 @@ function updateContent() {
 	mylog(currentSearchTerm);
 	mylog(newSearchTerm);
 	
-	if (currentSearchTerm != newSearchTerm){
+	if (currentSearchTerm != newSearchTerm){	//todo check that equivalentSites set is same (currently this check will re-search on redirect from bbc.co.uk to bbc.com)
 		mylog("setting question mark!");
 		numSearchResults.innerHTML = "?";
+		searchResultsDiv.innerHTML = "";
+		
 		currentSearchTerm = newSearchTerm;		
 	
 		var filteredMatches = autoSearchHosts.filter(function(matchstring){return currentHost.match(matchstring);});
@@ -67,7 +74,7 @@ function updateContent() {
 		
 		if (filteredMatches.length && filteredMatches.length>0){
 			mylog("host match found. will auto-search");
-			performPreSearch(newSearchTerm);
+			performPreSearch(currentUrl);
 		}else{
 			mylog("no host match");
 		}
@@ -81,76 +88,114 @@ function updateContent() {
     });
 }
 
+function getEquivalentSites(host){
+	//check whether host is on the equivalentSites list
+	//assume each site only listed once here.
+	var hostArr = [host];	//default array of results
+	for (var ss in equivalentSites){
+		var siteList = equivalentSites[ss];
+		if (siteList.indexOf(host)!=-1){
+			hostArr = siteList;
+		}
+	}
+	//console.log("currentHosts = " + currentHosts);
+	return hostArr;
+}
+
 searchButton.addEventListener("click",function(evt){
 	window.open("https://www.reddit.com/search?q="+encodeURI(currentUrl));
 });
 preSearchButton.addEventListener("click",function(evt){
 	performPreSearch(currentSearchTerm);
 });
-function performPreSearch(searchTerm){
+function performPreSearch(urlToSearch){
 	searchResultsDiv.innerHTML="";
-	//var jsonSearchUrl = "https://www.reddit.com/search.json?limit=1&q="+encodeURIComponent(currentUrl);
-	var jsonSearchUrl = "https://www.reddit.com/search.json?q="+encodeURIComponent(searchTerm);
-		//currently limit appears to not be applied. same results irrespective of limit. is this a bug? does it happen for curl? 
-		//appears to follow a 302 when open in browser address bar, rather than actually providing useful json data as requested.
-		//best guess doing something "clever" (stupid) when search for url. try workaround - search for url without it getting pegged as an url
-		//deleting https:// from url gets 0 results.
 	
-	//urls appear to redirect to "submit", but submit doesn't take limit param
-	//var jsonSearchUrl = "https://www.reddit.com/submit.json?limit=1&q="+encodeURIComponent(currentUrl);
+	//get list of equivalent sites
+	//perform search for all, updating list of all results
+	var allResults = [];
+	var currentHost = urlToSearch.hostname;	//redoing logic from elsewhere. todo combine
+	var siteList = getEquivalentSites(currentHost);
+	var numSearchesToDo = siteList.length;
 	
-	//var jsonSearchUrl = "https://www.reddit.com/search.json?limit=1&q=test";
-		//limit functions here ok
+	console.log("should do "+ numSearchesToDo + " searches...");
+	
+	for (var hh in siteList){
+		console.log(urlToSearch.protocol+'//'+siteList[hh]+urlToSearch.pathname);
+	}
+	
+	for (var hh in siteList){
+		singleSearch(urlToSearch.protocol+'//'+siteList[hh]+urlToSearch.pathname);
+	}
+	
+	function singleSearch(searchTerm){
+		console.log("will search for " + searchTerm);
 		
-	console.log("will search for " +  jsonSearchUrl);
+		//var jsonSearchUrl = "https://www.reddit.com/search.json?limit=1&q="+encodeURIComponent(currentUrl);
+		var jsonSearchUrl = "https://www.reddit.com/search.json?q="+encodeURIComponent(searchTerm);
+			//currently limit appears to not be applied. same results irrespective of limit. is this a bug? does it happen for curl? 
+			//appears to follow a 302 when open in browser address bar, rather than actually providing useful json data as requested.
+			//best guess doing something "clever" (stupid) when search for url. try workaround - search for url without it getting pegged as an url
+			//deleting https:// from url gets 0 results.
 		
-	//var jsonSearchUrl = "https://duckduckgo.com/";	//this can be called ok.
-	var xhr = new XMLHttpRequest();
-	xhr.open("GET", jsonSearchUrl, true);
-	xhr.onload = function (e) {
-	  if (xhr.readyState === 4) {
-		if (xhr.status === 200) {
-		  numSearchResults.innerHTML = "RESULT INCOMING";
+		//urls appear to redirect to "submit", but submit doesn't take limit param
+		//var jsonSearchUrl = "https://www.reddit.com/submit.json?limit=1&q="+encodeURIComponent(currentUrl);
 		
-		  console.log(xhr.responseText);
-		  var numresults = 0;
-			//figure out if has results.
-			var responseObject = JSON.parse(xhr.responseText);
+		//var jsonSearchUrl = "https://www.reddit.com/search.json?limit=1&q=test";
+			//limit functions here ok
 			
-			//seems responseObject is sometimes array-like, sometimes not!
-			//can see it's like an array by length property
-			console.log( typeof responseObject);	//always object, not array
-			console.log( responseObject.length);
-			var thingWeWant = responseObject.length ? responseObject[0]:responseObject;
+		console.log("will search for " +  jsonSearchUrl);
 			
-			console.log(responseObject);
-			//console.log(responseObject[0]);
+		//var jsonSearchUrl = "https://duckduckgo.com/";	//this can be called ok.
+		var xhr = new XMLHttpRequest();
+		xhr.open("GET", jsonSearchUrl, true);
+		xhr.onload = function (e) {
+		  if (xhr.readyState === 4) {
+			if (xhr.status === 200) {
+			  numSearchResults.innerHTML = "RESULT INCOMING";
 			
-			console.log(thingWeWant.data);
-			if (thingWeWant.data && thingWeWant.data.children){
-				var resultsData = thingWeWant.data.children;
+			  console.log(xhr.responseText);
+			  var numresults = 0;
+				//figure out if has results.
+				var responseObject = JSON.parse(xhr.responseText);
 				
-				var resultsTitles = [];
-				for (var dd in resultsData){
-					resultsTitles.push(resultsData[dd].data.title);
+				//seems responseObject is sometimes array-like, sometimes not!
+				//can see it's like an array by length property
+				console.log( typeof responseObject);	//always object, not array
+				console.log( responseObject.length);
+				var thingWeWant = responseObject.length ? responseObject[0]:responseObject;
+				
+				console.log(responseObject);
+				//console.log(responseObject[0]);
+				
+				console.log(thingWeWant.data);
+				if (thingWeWant.data && thingWeWant.data.children){					
+					addResults(thingWeWant.data.children);
 				}
-				searchResultsDiv.innerHTML=resultsTitles.join("<br/>");
+				console.log("number of results : " + allResults.length);
 				
-				numresults =  resultsData.length;
+				numSearchResults.innerHTML = allResults.length;
+			} else {
+				numSearchResults.innerHTML = "ERROR";
+			  console.error(xhr.statusText);
 			}
-			console.log("number of results : " + numresults);
-			
-			numSearchResults.innerHTML = numresults;
-		} else {
-			numSearchResults.innerHTML = "ERROR";
+			numSearchesToDo--;
+		  }
+		};
+		xhr.onerror = function (e) {
 		  console.error(xhr.statusText);
+		};
+		xhr.send(null);
+	}
+	
+	function addResults(resultsData){
+		var resultsTitles = [];
+		for (var dd in resultsData){
+			resultsTitles.push(resultsData[dd].data.title);
 		}
-	  }
-	};
-	xhr.onerror = function (e) {
-	  console.error(xhr.statusText);
-	};
-	xhr.send(null);
+		allResults=allResults.concat(resultsTitles);
+		searchResultsDiv.innerHTML=allResults.join("<br/>");	//TODO allResults should not just be titles.
+	}
 };
 
 /*
