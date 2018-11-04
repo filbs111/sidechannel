@@ -106,7 +106,7 @@ searchButton.addEventListener("click",function(evt){
 	window.open("https://www.reddit.com/search?q="+encodeURI(currentUrl));
 });
 preSearchButton.addEventListener("click",function(evt){
-	performPreSearch(currentSearchTerm);
+	performPreSearch(currentUrl);
 });
 function performPreSearch(urlToSearch){
 	searchResultsDiv.innerHTML="";
@@ -121,11 +121,11 @@ function performPreSearch(urlToSearch){
 	console.log("should do "+ numSearchesToDo + " searches...");
 	
 	for (var hh in siteList){
-		console.log(urlToSearch.protocol+'//'+siteList[hh]+urlToSearch.pathname);
+		console.log(urlToSearch.protocol+'//'+siteList[hh]+urlToSearch.pathname+urlToSearch.search);
 	}
 	
 	for (var hh in siteList){
-		singleSearch(urlToSearch.protocol+'//'+siteList[hh]+urlToSearch.pathname);
+		singleSearch(urlToSearch.protocol+'//'+siteList[hh]+urlToSearch.pathname+urlToSearch.search);
 	}
 	
 	function singleSearch(searchTerm){
