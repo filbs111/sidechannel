@@ -2,6 +2,7 @@ var myWindowId;
 const pageNameBox = document.querySelector("#pagename");
 const searchButton = document.querySelector("#searchbutton");
 const numSearchResults = document.getElementById("numsearchresults");
+const searchResultsDiv = document.getElementById("searchresults");
 const preSearchButton = document.querySelector("#presearchbutton");
 var currentUrl = "";
 var currentSearchTerm = "";
@@ -87,6 +88,7 @@ preSearchButton.addEventListener("click",function(evt){
 	performPreSearch(currentSearchTerm);
 });
 function performPreSearch(searchTerm){
+	searchResultsDiv.innerHTML="";
 	//var jsonSearchUrl = "https://www.reddit.com/search.json?limit=1&q="+encodeURIComponent(currentUrl);
 	var jsonSearchUrl = "https://www.reddit.com/search.json?q="+encodeURIComponent(searchTerm);
 		//currently limit appears to not be applied. same results irrespective of limit. is this a bug? does it happen for curl? 
@@ -126,9 +128,18 @@ function performPreSearch(searchTerm){
 			
 			console.log(thingWeWant.data);
 			if (thingWeWant.data && thingWeWant.data.children){
-				numresults =  thingWeWant.data.children.length;
+				var resultsData = thingWeWant.data.children;
+				
+				var resultsTitles = [];
+				for (var dd in resultsData){
+					resultsTitles.push(resultsData[dd].data.title);
+				}
+				searchResultsDiv.innerHTML=resultsTitles.join("<br/>");
+				
+				numresults =  resultsData.length;
 			}
 			console.log("number of results : " + numresults);
+			
 			numSearchResults.innerHTML = numresults;
 		} else {
 			numSearchResults.innerHTML = "ERROR";
