@@ -23,11 +23,11 @@ var autoSearchHosts = [
 //for unknown sites, possibly UI should provide options, or preemptivaly search for URL as is, and stripped
 
 //simple way, accept same params regardless of website.
-//var acceptableParams = ["v"];	//v so youtube works
+var acceptableParams = ["v"];	//v so youtube works
 //TODO list params that wish to retain for each host. later could be specific to endpoints.
 
-//var mylog=console.log;	//so can turn off logs easily
-var mylog=function(txt){};
+var mylog=console.log;	//so can turn off logs easily
+//var mylog=function(txt){};
 	
 function updateContent() {
   console.log("UPDATING CONTENT");
@@ -44,7 +44,13 @@ function updateContent() {
 	var currentHost = currentUrl.hostname;
 	
 	//strip params from url (TODO don't do this for youtube!
-	var newSearchTerm = currentUrl.origin + currentUrl.pathname;
+	//var newSearchTerm = currentUrl.origin + currentUrl.pathname;
+	
+	var searchParams=currentUrl.searchParams;
+	searchParams.forEach(function(val,key){
+		if (acceptableParams.indexOf(key)==-1){searchParams.delete(key);};
+	});
+	var newSearchTerm = currentUrl.toString();	//redundant. TODO use currentUrl in place of newSearchTerm
 	
 	mylog("old and new search terms:");
 	mylog(currentSearchTerm);
@@ -55,7 +61,7 @@ function updateContent() {
 		numSearchResults.innerHTML = "?";
 		currentSearchTerm = newSearchTerm;		
 	
-		var filteredMatches = autoSearchHosts.filter(function(matchstring){return newSearchTerm.match(matchstring);});
+		var filteredMatches = autoSearchHosts.filter(function(matchstring){return currentHost.match(matchstring);});
 		mylog("filteredMatches: " + filteredMatches);
 		
 		if (filteredMatches.length && filteredMatches.length>0){
@@ -78,7 +84,7 @@ searchButton.addEventListener("click",function(evt){
 	window.open("https://www.reddit.com/search?q="+encodeURI(currentUrl));
 });
 preSearchButton.addEventListener("click",function(evt){
-	performPreSearch();
+	performPreSearch(currentSearchTerm);
 });
 function performPreSearch(searchTerm){
 	//var jsonSearchUrl = "https://www.reddit.com/search.json?limit=1&q="+encodeURIComponent(currentUrl);
