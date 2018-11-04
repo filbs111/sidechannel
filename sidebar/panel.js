@@ -4,26 +4,72 @@ const searchButton = document.querySelector("#searchbutton");
 const numSearchResults = document.getElementById("numsearchresults");
 const preSearchButton = document.querySelector("#presearchbutton");
 var currentUrl = "";
+var currentSearchTerm = "";
+var mycount=0;
 
-var autoSearchDomains = [ "www.theguardian.com", "bbc.co.uk" ];	//list of sites where will automatically do a search.
+var autoSearchHosts = [ 
+	"www.theguardian.com",
+	"bbc.co.uk", "bbc.com",
+	"www.nytimes.com"
+	];	//list of sites where will automatically do a search.
 	//not a good idea to auto-search everything since would result in sending user's navigation data to reddit!
 	//therefore intially only want family friendly sites here that won't get people persecuted by the state and/or society
 	//maybe want more general regex
 
+//get rid of params so search finds something more useful.
+//some places do want to retain params - eg youtube ?v=
+//other places want to get rid of params - eg nytimes has ...&action=click&module=editorsPicks... etc
+
+//for unknown sites, possibly UI should provide options, or preemptivaly search for URL as is, and stripped
+
+//simple way, accept same params regardless of website.
+//var acceptableParams = ["v"];	//v so youtube works
+//TODO list params that wish to retain for each host. later could be specific to endpoints.
+
+//var mylog=console.log;	//so can turn off logs easily
+var mylog=function(txt){};
+	
 function updateContent() {
-  numSearchResults.innerHTML = "?";
+  console.log("UPDATING CONTENT");
+  console.log(mycount++);
   browser.tabs.query({windowId: myWindowId, active: true})
     .then((tabs) => {
+
 	//url would like to search for
-	currentUrl = tabs[0].url;
+	currentUrl = new URL(tabs[0].url);
 	
-	//check for match in auto search domains array
+	//check for match in auto search hosts array
 	//TODO avoid repeating this during page loading - appears to be triggered multiple times for some sites
 	//TODO disable pre-search button when performing search
-	var filteredMatches = autoSearchDomains.filter(function(matchstring){return currentUrl.match(matchstring);});
-	if (filteredMatches.length>0){
-		performPreSearch();
+	var currentHost = currentUrl.hostname;
+	
+	//strip params from url (TODO don't do this for youtube!
+	var newSearchTerm = currentUrl.origin + currentUrl.pathname;
+	
+	mylog("old and new search terms:");
+	mylog(currentSearchTerm);
+	mylog(newSearchTerm);
+	
+	if (currentSearchTerm != newSearchTerm){
+		mylog("setting question mark!");
+		numSearchResults.innerHTML = "?";
+		currentSearchTerm = newSearchTerm;		
+	
+		var filteredMatches = autoSearchHosts.filter(function(matchstring){return newSearchTerm.match(matchstring);});
+		mylog("filteredMatches: " + filteredMatches);
+		
+		if (filteredMatches.length && filteredMatches.length>0){
+			mylog("host match found. will auto-search");
+			performPreSearch(newSearchTerm);
+		}else{
+			mylog("no host match");
+		}
+	}else{
+		mylog("same search term as last. skipping search");	//TODO timeout ( search result considered out of date if, say 5 minutes old )
+															//TODO remember recent results (useful if switching between tabs)
 	}
+	
+	currentSearchTerm = newSearchTerm;
 	//pageNameBox.innerHTML = currentUrl;
     });
 }
@@ -34,9 +80,9 @@ searchButton.addEventListener("click",function(evt){
 preSearchButton.addEventListener("click",function(evt){
 	performPreSearch();
 });
-function performPreSearch(){
+function performPreSearch(searchTerm){
 	//var jsonSearchUrl = "https://www.reddit.com/search.json?limit=1&q="+encodeURIComponent(currentUrl);
-	var jsonSearchUrl = "https://www.reddit.com/search.json?q="+encodeURIComponent(currentUrl);
+	var jsonSearchUrl = "https://www.reddit.com/search.json?q="+encodeURIComponent(searchTerm);
 		//currently limit appears to not be applied. same results irrespective of limit. is this a bug? does it happen for curl? 
 		//appears to follow a 302 when open in browser address bar, rather than actually providing useful json data as requested.
 		//best guess doing something "clever" (stupid) when search for url. try workaround - search for url without it getting pegged as an url
@@ -56,6 +102,8 @@ function performPreSearch(){
 	xhr.onload = function (e) {
 	  if (xhr.readyState === 4) {
 		if (xhr.status === 200) {
+		  numSearchResults.innerHTML = "RESULT INCOMING";
+		
 		  console.log(xhr.responseText);
 		  var numresults = 0;
 			//figure out if has results.
@@ -67,7 +115,7 @@ function performPreSearch(){
 			console.log( responseObject.length);
 			var thingWeWant = responseObject.length ? responseObject[0]:responseObject;
 			
-			//console.log(responseObject);
+			console.log(responseObject);
 			//console.log(responseObject[0]);
 			
 			console.log(thingWeWant.data);
@@ -77,6 +125,7 @@ function performPreSearch(){
 			console.log("number of results : " + numresults);
 			numSearchResults.innerHTML = numresults;
 		} else {
+			numSearchResults.innerHTML = "ERROR";
 		  console.error(xhr.statusText);
 		}
 	  }
@@ -90,12 +139,19 @@ function performPreSearch(){
 /*
 Update content when a new tab becomes active.
 */
-browser.tabs.onActivated.addListener(updateContent);
+browser.tabs.onActivated.addListener(
+	function(){
+		console.log("onActivated callback");
+		updateContent();
+	});
 
 /*
 Update content when a new page is loaded into a tab.
 */
-browser.tabs.onUpdated.addListener(updateContent);
+browser.tabs.onUpdated.addListener(function(){
+		console.log("onUpdated callback");
+		updateContent();
+	});
 
 /*
 When the sidebar loads, get the ID of its window,
