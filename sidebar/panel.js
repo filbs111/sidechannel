@@ -102,9 +102,6 @@ function getEquivalentSites(host){
 	return hostArr;
 }
 
-searchButton.addEventListener("click",function(evt){
-	window.open("https://www.reddit.com/search?q="+encodeURI(currentUrl));
-});
 preSearchButton.addEventListener("click",function(evt){
 	performPreSearch(currentUrl);
 });
@@ -189,12 +186,14 @@ function performPreSearch(urlToSearch){
 	}
 	
 	function addResults(resultsData){
-		var resultsTitles = [];
 		for (var dd in resultsData){
-			resultsTitles.push(resultsData[dd].data.title);
+			var linkElement = document.createElement("a");
+			linkElement.href = "https://www.reddit.com" + resultsData[dd].data.permalink;
+			var mytext = document.createTextNode(resultsData[dd].data.subreddit);
+			linkElement.appendChild(mytext);
+			searchResultsDiv.appendChild(linkElement);
+			searchResultsDiv.appendChild(document.createElement("br"))
 		}
-		allResults=allResults.concat(resultsTitles);
-		searchResultsDiv.innerHTML=allResults.join("<br/>");	//TODO allResults should not just be titles.
 	}
 };
 
