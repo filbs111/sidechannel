@@ -75,8 +75,9 @@ function updateContent() {
 		
 		if (filteredMatches.length && filteredMatches.length>0){
 			mylog("host match found. will auto-search");
-			performPreSearch(currentUrl);
+			performPreSearch(currentUrl, true);	//use stored data if available and fresh, else perform search query
 		}else{
+			performPreSearch(currentUrl, false);	//only use stored data. don't perform search query.
 			mylog("no host match");
 		}
 	}else{
@@ -104,9 +105,9 @@ function getEquivalentSites(host){
 }
 
 preSearchButton.addEventListener("click",function(evt){
-	performPreSearch(currentUrl);
+	performPreSearch(currentUrl, true);
 });
-function performPreSearch(urlToSearch){
+function performPreSearch(urlToSearch, canActiveSearch){
 	searchResultsDiv.innerHTML="";
 	
 	//get list of equivalent sites
@@ -143,6 +144,11 @@ function performPreSearch(urlToSearch){
 			}
 		}else{
 			mylog("no existing result found. will search for " + searchTerm);
+		}
+		
+		if (!canActiveSearch){
+			mylog("active search disabled, returning");
+			return;
 		}
 		
 		//var jsonSearchUrl = "https://www.reddit.com/search.json?limit=1&q="+encodeURIComponent(currentUrl);
