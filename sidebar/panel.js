@@ -168,7 +168,9 @@ function performPreSearch(urlToSearch){
 				console.log(thingWeWant.data);
 				if (thingWeWant.data && thingWeWant.data.children){					
 					addResults(thingWeWant.data.children);
+					allResults = allResults.concat(thingWeWant.data.children);	//get back number results behaviour.
 				}
+				
 				console.log("number of results : " + allResults.length);
 				
 				numSearchResults.innerHTML = allResults.length;
