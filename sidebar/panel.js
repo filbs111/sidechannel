@@ -8,6 +8,8 @@ var currentUrl = "";
 var currentSearchTerm = "";
 var mycount=0;
 
+var retainedResults = {};
+
 var autoSearchHosts = [ 
 	"www.theguardian.com",
 	"www.bbc.co.uk", "www.bbc.com",
@@ -119,72 +121,78 @@ function performPreSearch(urlToSearch){
 	
 	for (var hh in siteList){
 		console.log(urlToSearch.protocol+'//'+siteList[hh]+urlToSearch.pathname+urlToSearch.search);
-	}
-	
-	for (var hh in siteList){
 		singleSearch(urlToSearch.protocol+'//'+siteList[hh]+urlToSearch.pathname+urlToSearch.search);
 	}
 	
 	function singleSearch(searchTerm){
-		console.log("will search for " + searchTerm);
+		//check database for past result.
+		if (retainedResults[searchTerm]){	//TODO check age of result
+			console.log("existing result found");
+			allResults = allResults.concat(retainedResults[searchTerm]);
+		}else{
+			console.log("no existing result found. will search for " + searchTerm);
 		
-		//var jsonSearchUrl = "https://www.reddit.com/search.json?limit=1&q="+encodeURIComponent(currentUrl);
-		var jsonSearchUrl = "https://www.reddit.com/search.json?q="+encodeURIComponent(searchTerm);
-			//currently limit appears to not be applied. same results irrespective of limit. is this a bug? does it happen for curl? 
-			//appears to follow a 302 when open in browser address bar, rather than actually providing useful json data as requested.
-			//best guess doing something "clever" (stupid) when search for url. try workaround - search for url without it getting pegged as an url
-			//deleting https:// from url gets 0 results.
-		
-		//urls appear to redirect to "submit", but submit doesn't take limit param
-		//var jsonSearchUrl = "https://www.reddit.com/submit.json?limit=1&q="+encodeURIComponent(currentUrl);
-		
-		//var jsonSearchUrl = "https://www.reddit.com/search.json?limit=1&q=test";
-			//limit functions here ok
+			//var jsonSearchUrl = "https://www.reddit.com/search.json?limit=1&q="+encodeURIComponent(currentUrl);
+			var jsonSearchUrl = "https://www.reddit.com/search.json?q="+encodeURIComponent(searchTerm);
+				//currently limit appears to not be applied. same results irrespective of limit. is this a bug? does it happen for curl? 
+				//appears to follow a 302 when open in browser address bar, rather than actually providing useful json data as requested.
+				//best guess doing something "clever" (stupid) when search for url. try workaround - search for url without it getting pegged as an url
+				//deleting https:// from url gets 0 results.
 			
-		console.log("will search for " +  jsonSearchUrl);
+			//urls appear to redirect to "submit", but submit doesn't take limit param
+			//var jsonSearchUrl = "https://www.reddit.com/submit.json?limit=1&q="+encodeURIComponent(currentUrl);
 			
-		//var jsonSearchUrl = "https://duckduckgo.com/";	//this can be called ok.
-		var xhr = new XMLHttpRequest();
-		xhr.open("GET", jsonSearchUrl, true);
-		xhr.onload = function (e) {
-		  if (xhr.readyState === 4) {
-			if (xhr.status === 200) {
-			  numSearchResults.innerHTML = "RESULT INCOMING";
-			
-			  console.log(xhr.responseText);
-			  var numresults = 0;
-				//figure out if has results.
-				var responseObject = JSON.parse(xhr.responseText);
+			//var jsonSearchUrl = "https://www.reddit.com/search.json?limit=1&q=test";
+				//limit functions here ok
 				
-				//seems responseObject is sometimes array-like, sometimes not!
-				//can see it's like an array by length property
-				console.log( typeof responseObject);	//always object, not array
-				console.log( responseObject.length);
-				var thingWeWant = responseObject.length ? responseObject[0]:responseObject;
+			console.log("will search for " +  jsonSearchUrl);
 				
-				console.log(responseObject);
-				//console.log(responseObject[0]);
+			//var jsonSearchUrl = "https://duckduckgo.com/";	//this can be called ok.
+			var xhr = new XMLHttpRequest();
+			xhr.open("GET", jsonSearchUrl, true);
+			xhr.onload = function (e) {
+			  if (xhr.readyState === 4) {
+				if (xhr.status === 200) {
+				  numSearchResults.innerHTML = "RESULT INCOMING";
 				
-				console.log(thingWeWant.data);
-				if (thingWeWant.data && thingWeWant.data.children){					
-					addResults(thingWeWant.data.children);
-					allResults = allResults.concat(thingWeWant.data.children);	//get back number results behaviour.
+				  console.log(xhr.responseText);
+				  var numresults = 0;
+					//figure out if has results.
+					var responseObject = JSON.parse(xhr.responseText);
+					
+					//seems responseObject is sometimes array-like, sometimes not!
+					//can see it's like an array by length property
+					console.log( typeof responseObject);	//always object, not array
+					console.log( responseObject.length);
+					var thingWeWant = responseObject.length ? responseObject[0]:responseObject;
+					
+					console.log(responseObject);
+					//console.log(responseObject[0]);
+					
+					console.log(thingWeWant.data);
+					if (thingWeWant.data && thingWeWant.data.children){	
+						var returnedResults = thingWeWant.data.children;
+						addResults(returnedResults);
+						allResults = allResults.concat(returnedResults);	//get back number results behaviour.
+						
+						retainedResults[searchTerm] = returnedResults;	//TODO check this is right place, including if there are no results.
+					}
+					
+					console.log("number of results : " + allResults.length);
+					
+					numSearchResults.innerHTML = allResults.length;
+				} else {
+					numSearchResults.innerHTML = "ERROR";
+				  console.error(xhr.statusText);
 				}
-				
-				console.log("number of results : " + allResults.length);
-				
-				numSearchResults.innerHTML = allResults.length;
-			} else {
-				numSearchResults.innerHTML = "ERROR";
+				numSearchesToDo--;
+			  }
+			};
+			xhr.onerror = function (e) {
 			  console.error(xhr.statusText);
-			}
-			numSearchesToDo--;
-		  }
-		};
-		xhr.onerror = function (e) {
-		  console.error(xhr.statusText);
-		};
-		xhr.send(null);
+			};
+			xhr.send(null);
+		}
 	}
 	
 	function addResults(resultsData){
