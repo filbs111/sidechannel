@@ -35,12 +35,11 @@ var equivalentSites = [
 	];
 
 
-var mylog=console.log;	//so can turn off logs easily
-//var mylog=function(txt){};
+var mylog=function(txt){console.log("sidechannellog: " + txt);}	//for filtering browser console
 	
 function updateContent() {
-  console.log("UPDATING CONTENT");
-  console.log(mycount++);
+  mylog("UPDATING CONTENT");
+  mylog(mycount++);
   browser.tabs.query({windowId: myWindowId, active: true})
     .then((tabs) => {
 
@@ -100,7 +99,7 @@ function getEquivalentSites(host){
 			hostArr = siteList;
 		}
 	}
-	//console.log("currentHosts = " + currentHosts);
+	//mylog("currentHosts = " + currentHosts);
 	return hostArr;
 }
 
@@ -117,20 +116,20 @@ function performPreSearch(urlToSearch){
 	var siteList = getEquivalentSites(currentHost);
 	var numSearchesToDo = siteList.length;
 	
-	console.log("should do "+ numSearchesToDo + " searches...");
+	mylog("should do "+ numSearchesToDo + " searches...");
 	
 	for (var hh in siteList){
-		console.log(urlToSearch.protocol+'//'+siteList[hh]+urlToSearch.pathname+urlToSearch.search);
+		mylog(urlToSearch.protocol+'//'+siteList[hh]+urlToSearch.pathname+urlToSearch.search);
 		singleSearch(urlToSearch.protocol+'//'+siteList[hh]+urlToSearch.pathname+urlToSearch.search);
 	}
 	
 	function singleSearch(searchTerm){
 		//check database for past result.
 		if (retainedResults[searchTerm]){	//TODO check age of result
-			console.log("existing result found");
+			mylog("existing result found");
 			allResults = allResults.concat(retainedResults[searchTerm]);
 		}else{
-			console.log("no existing result found. will search for " + searchTerm);
+			mylog("no existing result found. will search for " + searchTerm);
 		
 			//var jsonSearchUrl = "https://www.reddit.com/search.json?limit=1&q="+encodeURIComponent(currentUrl);
 			var jsonSearchUrl = "https://www.reddit.com/search.json?q="+encodeURIComponent(searchTerm);
@@ -145,7 +144,7 @@ function performPreSearch(urlToSearch){
 			//var jsonSearchUrl = "https://www.reddit.com/search.json?limit=1&q=test";
 				//limit functions here ok
 				
-			console.log("will search for " +  jsonSearchUrl);
+			mylog("will search for " +  jsonSearchUrl);
 				
 			//var jsonSearchUrl = "https://duckduckgo.com/";	//this can be called ok.
 			var xhr = new XMLHttpRequest();
@@ -155,21 +154,21 @@ function performPreSearch(urlToSearch){
 				if (xhr.status === 200) {
 				  numSearchResults.innerHTML = "RESULT INCOMING";
 				
-				  console.log(xhr.responseText);
+				  mylog(xhr.responseText);
 				  var numresults = 0;
 					//figure out if has results.
 					var responseObject = JSON.parse(xhr.responseText);
 					
 					//seems responseObject is sometimes array-like, sometimes not!
 					//can see it's like an array by length property
-					console.log( typeof responseObject);	//always object, not array
-					console.log( responseObject.length);
+					mylog( typeof responseObject);	//always object, not array
+					mylog( responseObject.length);
 					var thingWeWant = responseObject.length ? responseObject[0]:responseObject;
 					
-					console.log(responseObject);
-					//console.log(responseObject[0]);
+					mylog(responseObject);
+					//mylog(responseObject[0]);
 					
-					console.log(thingWeWant.data);
+					mylog(thingWeWant.data);
 					if (thingWeWant.data && thingWeWant.data.children){	
 						var returnedResults = thingWeWant.data.children;
 						addResults(returnedResults);
@@ -178,7 +177,7 @@ function performPreSearch(urlToSearch){
 						retainedResults[searchTerm] = returnedResults;	//TODO check this is right place, including if there are no results.
 					}
 					
-					console.log("number of results : " + allResults.length);
+					mylog("number of results : " + allResults.length);
 					
 					numSearchResults.innerHTML = allResults.length;
 				} else {
@@ -212,7 +211,7 @@ Update content when a new tab becomes active.
 */
 browser.tabs.onActivated.addListener(
 	function(){
-		console.log("onActivated callback");
+		mylog("onActivated callback");
 		updateContent();
 	});
 
@@ -220,7 +219,7 @@ browser.tabs.onActivated.addListener(
 Update content when a new page is loaded into a tab.
 */
 browser.tabs.onUpdated.addListener(function(){
-		console.log("onUpdated callback");
+		mylog("onUpdated callback");
 		updateContent();
 	});
 
