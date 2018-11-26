@@ -1,8 +1,10 @@
 console.log("SIDECHANNEL BACKGROUND : in script!");
 
 
-function updateActiveTab(tabs) {
+function updateActiveTab(unknown_info) {	//TODO what is passed in here? 
+			//can it be used to put separate info in each window's browser actions?
 	console.log("SIDECHANNEL BACKGROUND : in updateActiveTab!");
+	
 	
 	browser.tabs.query({active: true})	//active - Whether the tabs are active in their windows.	//what happens if have 2 windows open? can have multiple active tabs??? would like to have crowserAction button function in multiple open windows 
     .then(function(tabs){
@@ -40,11 +42,17 @@ browser.browserAction.onClicked.addListener(function(evt){
 
 var myCount=0;
 function updateTitle(){
-	setTimeout(updateTitle,5000);
+	setTimeout(updateTitle,1000);
 	console.log("SIDECHANNEL BACKGROUND , will update title");
 	browser.browserAction.getTitle({}).then(function(something){
 		console.log("SIDECHANNEL BACKGROUND "+ something);
 	});	//some promise thingy TODO understand promises https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/browserAction/getTitle
-	browserAction.setTitle({title: "TITLE #" + (myCount++)});
+	browserAction.setTitle({title: "TITLE #" + (myCount)});
+	browserAction.setBadgeText({text: ""+myCount});	//handle for multiple windows/tabs. https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/browserAction/setBadgeText
+	
+browser.browserAction.setBadgeBackgroundColor({color:[0,0,0,100]});	//near transparent. annoyinglt full transparent still has a drop shadow
+	//TODO don't keep re-setting this
+	
+	myCount++;
 }
 updateTitle();
