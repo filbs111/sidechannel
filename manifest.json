@@ -10,6 +10,12 @@
     }
   },
 
+  "browser_action": {
+    "default_icon": "icons/hmm38.png",
+    "default_title": "Hmm",
+    "default_popup": "popup/show_results.html"
+  },
+  
   "sidebar_action": {
     "default_icon": "icons/hmm38.png",
     "default_title" : "SideChannel",
@@ -27,6 +33,10 @@
         "default": "Ctrl+Shift+Y"
       }
     }
+  },
+  
+  "background": {
+    "scripts": ["background.js"]
   }
 
 }
